@@ -12,12 +12,12 @@
 // ------------------------------
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
+#include <float.h>
 
 // ------------------------------
 // Constantes
 // ------------------------------
-#define INF INT_MAX 		// Valor infinito para representar distâncias não alcançáveis
+#define INF DBL_MAX 		// Valor infinito para representar distancias não alcancaveis
 #define MAX_VERTICES 100	// Numero maximo de vertices do grafo
 
 // ------------------------------
@@ -27,6 +27,7 @@
 //Define um nodo da lista de adjacencia
 typedef struct nodoListaAdj{	
     int destino;
+    int origem;
     double peso;
     struct nodoListaAdj *prox;
 } NodoListaAdjacencia;
@@ -40,15 +41,15 @@ typedef struct {
 // ------------------------------
 // Funcoes primarias
 // ------------------------------
-void algoritmoDijkstra(); //[WIP]
+void algoritmoDijkstra(Digrafo *grafo, int origem, int destino);
 
 // ------------------------------
 // Funcoes auxiliares
 // ------------------------------
 void recebeArquivo();
 void inicializarDigrafo(Digrafo *grafo, int numeroVertices);
-void adicionarArco(Digrafo *grafo, int origem, int destino, int peso);
-void imprimir_digrafo(Digrafo *grafo);	// Funcao temporaria
+void adicionarArco(Digrafo *grafo, int origem, int destino, double peso);
+int encontraMenorDistancia(Digrafo *grafo, double *distancia, int *visitados, int verticeAtual);
 
 int main()
 {
@@ -59,9 +60,10 @@ int main()
 	
 }	// Fim main
 
+
 void recebeArquivo()
 {    
-	char nomeArquivo[50] = "digrafo.txt";
+	char nomeArquivo[50];
 	FILE *arquivo;
 	
 	int** arcos;
@@ -69,10 +71,8 @@ void recebeArquivo()
 	int n,m,s,t,i,j;
 	Digrafo digrafo;
 	
-	/*
 	printf("\n\tDigite o nome e extensao do arquivo a ser lido: ");
 	scanf("%s%*c", nomeArquivo);
-	*/
 	
 	arquivo = fopen(nomeArquivo, "rt");
 	
@@ -114,7 +114,7 @@ void recebeArquivo()
 			{
 				fscanf(arquivo,"%d", &arcos[i][j]);	// Recebe um vertice do arco
 			}else{
-				fscanf(arquivo,"%lf", &custos[i]);	// Recebe o custo do arco
+				fscanf(arquivo,"%lf", &custos[i]);	// Recebe o custo do arco, consideramos que o custo poderia ser nao-inteiro
 			}	
 	 	}
 	}
@@ -123,24 +123,8 @@ void recebeArquivo()
 
 	inicializarDigrafo(&digrafo, n);
 	for(i = 0; i < m; i++) adicionarArco(&digrafo, arcos[i][0], arcos[i][1], custos[i]);
-	imprimir_digrafo(&digrafo);
 	
-	algoritmoDijkstra(); //[WIP]
-	
-	/* Testa se os valores foram recebidos devidamente
-	for(i = 0; i < m; i++)
-	{
-		for(j = 0; j <= 2; j++)
-		{
-			printf("\n");
-			if(j != 2){
-				printf("%d ", arcos[i][j]);
-			}else{
-				printf("%.1lf ", custos[i]);
-			}	
-	 	}
-	}
-	*/
+	algoritmoDijkstra(&digrafo, s, t);
 	
 	for (i = 0; i < m; i++) free(arcos[i]);
 	free(arcos);
@@ -150,11 +134,55 @@ void recebeArquivo()
 	
 }	// Fim recebeArquivo
 
-void algoritmoDijkstra()	//[WIP]
+int encontraMenorDistancia(Digrafo *grafo, double *distancia, int *visitados, int verticeAtual)
 {
+    int i, indice = verticeAtual;
+    double menorCaminho = INF;
+	NodoListaAdjacencia *nodoAtual;
 	
-	printf("Implementar Dijkstra...");
+	nodoAtual = grafo->cabecalho[verticeAtual-1];
+	while (nodoAtual != NULL) 
+	{
+    	if(!visitados[nodoAtual->destino-1] && nodoAtual->peso + distancia[verticeAtual-1] < menorCaminho)
+    	{
+    		distancia[nodoAtual->destino-1] = nodoAtual->peso + distancia[verticeAtual-1];
+    		menorCaminho = distancia[nodoAtual->destino-1];
+    		indice = nodoAtual->destino;
+		}
+        nodoAtual = nodoAtual->prox;
+    }
+    
+    return indice;
+    
+}	//; Fim encontraMenorDistancia
+
+void algoritmoDijkstra(Digrafo *grafo, int origem, int destino)	//[WIP]
+{
+	int visitados[grafo->numeroVertices];
+	double distancia[grafo->numeroVertices];
+	int i, j, verticeAtual = origem;
 	
+	for(i = 0; i < grafo->numeroVertices; i++)
+	{
+		distancia[i] = INF;
+		visitados[i] = 0;
+	}
+	
+	distancia[origem-1] = 0;
+	
+	printf("\n\tCaminho minimo do vertice %d para o vertice %d: ", origem, destino);
+	
+	for(i = 0; i < grafo->numeroVertices; i++)
+	{
+		while(verticeAtual != destino)
+		{
+			printf("(%d, ", verticeAtual);
+			verticeAtual = encontraMenorDistancia(grafo, distancia, visitados, verticeAtual);
+			printf("%d) ", verticeAtual);
+		}
+	}
+	
+	printf("\n\n\tCusto: %.2lf", distancia[destino-1]);
 	
 }	// Fim algoritmoDijkstra
 
@@ -163,29 +191,17 @@ void inicializarDigrafo(Digrafo *grafo, int numeroVertices)
 	int i;
 	grafo->numeroVertices = numeroVertices;
     for (i = 0; i < numeroVertices; i++) grafo->cabecalho[i] = NULL;
-}
+    
+}	// Fim inicializarDigrafo
 
-void adicionarArco(Digrafo *grafo, int origem, int destino, int peso)
+void adicionarArco(Digrafo *grafo, int origem, int destino, double peso)
 {
 	NodoListaAdjacencia *novoNodo = malloc(sizeof(NodoListaAdjacencia));
+	novoNodo->origem = origem;
     novoNodo->destino = destino;
     novoNodo->peso = peso;
     novoNodo->prox = grafo->cabecalho[origem-1];	// i-1 porque o primeiro vertice tem valor 1, mas sera indexado a partir do 0
     grafo->cabecalho[origem-1] = novoNodo;
-}
-
-void imprimir_digrafo(Digrafo *grafo) {
-	int i;
-	NodoListaAdjacencia *nodoAtual;
-	
-    for ( i = 0; i < grafo->numeroVertices; i++) {
-        printf("Adjacentes do vertice %d: ", i+1);	// i+1 porque o primeiro vertice tem valor 1, mas esta indexado a partir do 0
-        nodoAtual = grafo->cabecalho[i];
-        while (nodoAtual != NULL) {
-            printf("%d ", nodoAtual->destino);
-            nodoAtual = nodoAtual->prox;
-        }
-        printf("\n");
-    }
-}
+    
+}	// Fim adicionarArco
 
