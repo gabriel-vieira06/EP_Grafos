@@ -132,6 +132,11 @@ void recebeArquivo()
 	
 	fclose(arquivo);
 	
+	printf("\n\n\t------------------------------");
+	printf("\n\t| Pressione ENTER para sair. |");
+	printf("\n\t------------------------------");
+	getchar();
+	
 }	// Fim recebeArquivo
 
 int encontraMenorDistancia(Digrafo *grafo, double *distancia, int *visitados, int verticeAtual)
@@ -154,7 +159,7 @@ int encontraMenorDistancia(Digrafo *grafo, double *distancia, int *visitados, in
     
     return indice;
     
-}	//; Fim encontraMenorDistancia
+}	// Fim encontraMenorDistancia
 
 void algoritmoDijkstra(Digrafo *grafo, int origem, int destino)	//[WIP]
 {
