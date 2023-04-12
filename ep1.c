@@ -23,55 +23,53 @@
 // ------------------------------
 // Estruturas
 // ------------------------------
-
-//Define um nodo da lista de adjacencia
-typedef struct nodoListaAdj{	
-    int destino;
-    int origem;
-    double peso;
-    struct nodoListaAdj *prox;
-} NodoListaAdjacencia;
-
-// Define a lista de adjacencia
 typedef struct {
-	int numeroVertices;
-    NodoListaAdjacencia *cabecalho[MAX_VERTICES];
-} Digrafo;
+  int origem, destino;
+  double custo;
+} Arco;
 
 // ------------------------------
-// Funcoes primarias
-// ------------------------------
-void algoritmoDijkstra(Digrafo *grafo, int origem, int destino);
-
-// ------------------------------
-// Funcoes auxiliares
+// Funcoes
 // ------------------------------
 void recebeArquivo();
-void inicializarDigrafo(Digrafo *grafo, int numeroVertices);
-void adicionarArco(Digrafo *grafo, int origem, int destino, double peso);
-int encontraMenorDistancia(Digrafo *grafo, double *distancia, int *visitados, int verticeAtual);
+void esperaResposta();
+void algoritmoDijkstra(int num_vertices, int num_arcos, int origem, int destino, Arco *arcos);
 
 int main()
 {
-     
 	recebeArquivo();
+	esperaResposta();
 	
 	return 0;
-	
+
 }	// Fim main
 
-
 void recebeArquivo()
-{    
+{
+	/*
+		Metodo recebeArquivo
+		
+		Recebe o nome de um arquivo e sua extensao para entao
+		obter as informacoes do digrafo, sendo elas
+		- n o numero de vertices
+		- m o numero de arcos
+		- s o vertice origem
+		- t o vertice destino
+		- os arcos do digrafo
+		- o custo de cada arco do digrafo
+		Em seguida realiza a chamada do algoritmo de Dijkstra
+	*/
+	
 	char nomeArquivo[50];
 	FILE *arquivo;
+	Arco *arcos;
 	
-	int** arcos;
-	double* custos;
-	int n,m,s,t,i,j;
-	Digrafo digrafo;
+	int i;
+	int n,m,s,t;
+	int u, v;
+	double custo;
 	
-	printf("\n\tDigite o nome e extensao do arquivo a ser lido: ");
+	printf("\n\tDigite o nome e extensao do arquivo a ser lido (Ex: arquivo.txt): ");
 	scanf("%s%*c", nomeArquivo);
 	
 	arquivo = fopen(nomeArquivo, "rt");
@@ -84,129 +82,128 @@ void recebeArquivo()
 	
 	fscanf(arquivo,"%d %d %d %d", &n, &m, &s, &t);
 	
-	// Recebe os arcos e custos a partir do arquivo aberto
+	arcos = malloc(sizeof(Arco) * m);
 	
-	arcos = malloc(sizeof (int*) * m);
-	custos = malloc(sizeof (double) * m);
-	
-	if (arcos == NULL || custos == NULL)
+	if (arcos == NULL)	// Falta de memoria.
 	{
-		printf("\n\n\tMemória insuficiente.");
-		return;	// Falta de memoria.
+		printf("\n\n\tMemoria insuficiente.");
+		return;
 	}
+	
 	for (i = 0; i < m; i++)
 	{
-		arcos[i] = malloc(sizeof(int) * 2);
-		if (arcos[i] == NULL)		// Falta de memoria.
-		{
-			for (j = 0; j < i; j++) free (arcos[j]);
-			free (arcos);
-			printf("\n\n\tMemória insuficiente.");
-			return;
-		}
+		fscanf(arquivo, "%d %d %lf", &u, &v, &custo); // Le os dados de cada arco
+		arcos[i].origem = u - 1;
+		arcos[i].destino = v - 1;
+		arcos[i].custo = custo;
 	}
-	
-	for(i = 0; i < m; i++)
-	{
-		for(j = 0; j <= 2; j++)
-		{
-			if(j != 2)
-			{
-				fscanf(arquivo,"%d", &arcos[i][j]);	// Recebe um vertice do arco
-			}else{
-				fscanf(arquivo,"%lf", &custos[i]);	// Recebe o custo do arco, consideramos que o custo poderia ser nao-inteiro
-			}	
-	 	}
-	}
-	
-	// Criacao do digrafo a partir dos dados recebidos do arquivo
-
-	inicializarDigrafo(&digrafo, n);
-	for(i = 0; i < m; i++) adicionarArco(&digrafo, arcos[i][0], arcos[i][1], custos[i]);
-	
-	algoritmoDijkstra(&digrafo, s, t);
-	
-	for (i = 0; i < m; i++) free(arcos[i]);
-	free(arcos);
-	free(custos);
 	
 	fclose(arquivo);
+	
+	algoritmoDijkstra(n, m, s, t, arcos);
+	
+}	// Fim recebeArquivo
+
+void algoritmoDijkstra(int num_vertices, int num_arcos, int origem, int destino, Arco *arcos)
+{
+	double *distancia = malloc(sizeof(double) * num_vertices);
+	int *anterior = malloc(sizeof(int) * num_vertices);
+	int *visitados = malloc(sizeof(int) * num_vertices);
+	
+	int i, j;
+	int u, v, c;
+	
+	if(distancia == NULL || anterior == NULL || visitados == NULL)
+	{
+		printf("\n\n\tMemoria insuficiente.");
+		return;
+	}
+	
+	for (i = 0; i < num_vertices; i++) 
+	{
+	    distancia[i] = INF;
+	    anterior[i] = -1;
+	    visitados[i] = 0;
+	}
+	
+	distancia[origem-1] = 0;
+	
+	for (i = 0; i < num_vertices - 1; i++)
+	{
+	    u = -1;
+	    for (j = 0; j < num_vertices; j++) 
+		{
+	      if (!visitados[j] && (u == -1 || distancia[j] < distancia[u])) u = j;
+	    }
+	    
+		visitados[u] = 1;
+	    
+		for (j = 0; j < num_arcos; j++) 
+		{
+		    if (arcos[j].origem == u) 
+			{
+		        v = arcos[j].destino;
+		        c = arcos[j].custo;
+		        if (distancia[u] + c < distancia[v]) 
+				{ 
+		          distancia[v] = distancia[u] + c;
+		          anterior[v] = u;
+	    		}
+	    	}
+	    }
+	}
+	
+	free(visitados);
+	
+	if (distancia[destino - 1] == INF) 
+	{
+	    printf("\n\n\tNao ha caminho entre os vertices %d e %d \n", origem, destino);
+	} else {
+	    
+	    int *lista_impressao = malloc(sizeof(int) * num_vertices);
+	    
+	    printf("\n\n\tCaminho minimo do vertice %d para o vertice %d: ", origem, destino);
+	    
+	    u = destino - 1;
+	    i = 0;
+	    while(anterior[u] != -1)
+	    {
+	    	lista_impressao[i] = u;
+	    	u = anterior[u];
+	    	i++;
+		}
+		
+		lista_impressao[i] = origem-1;
+		
+		for(j = i; j > 0; j--)
+		{
+			printf("(%d, ", lista_impressao[j]+1);
+			printf("%d) ", lista_impressao[j-1]+1);
+		}
+	    
+	    printf("\n\n\tCusto: %0.4lf\n", distancia[destino - 1]);
+	}
+  
+  free(arcos); // Libera a memoria alocada para o vetor de arcos
+  free(distancia);  // Libera a memoria alocada para o vetor de diatancia
+  free(anterior);
+
+}	// Fim algoritmoDijkstra
+
+void esperaResposta()
+{
+	
+	/*
+		Metodo esperaResposta
+		
+		Simplesmente garante que o programa nao feche e permite a analise dos resultados
+		solicitando que o usuário pressione ENTER para encerra-lo.
+		
+	*/
 	
 	printf("\n\n\t------------------------------");
 	printf("\n\t| Pressione ENTER para sair. |");
 	printf("\n\t------------------------------");
 	getchar();
 	
-}	// Fim recebeArquivo
-
-int encontraMenorDistancia(Digrafo *grafo, double *distancia, int *visitados, int verticeAtual)
-{
-    int i, indice = verticeAtual;
-    double menorCaminho = INF;
-	NodoListaAdjacencia *nodoAtual;
-	
-	nodoAtual = grafo->cabecalho[verticeAtual-1];
-	while (nodoAtual != NULL) 
-	{
-    	if(!visitados[nodoAtual->destino-1] && nodoAtual->peso + distancia[verticeAtual-1] < menorCaminho)
-    	{
-    		distancia[nodoAtual->destino-1] = nodoAtual->peso + distancia[verticeAtual-1];
-    		menorCaminho = distancia[nodoAtual->destino-1];
-    		indice = nodoAtual->destino;
-		}
-        nodoAtual = nodoAtual->prox;
-    }
-    
-    return indice;
-    
-}	// Fim encontraMenorDistancia
-
-void algoritmoDijkstra(Digrafo *grafo, int origem, int destino)	//[WIP]
-{
-	int visitados[grafo->numeroVertices];
-	double distancia[grafo->numeroVertices];
-	int i, j, verticeAtual = origem;
-	
-	for(i = 0; i < grafo->numeroVertices; i++)
-	{
-		distancia[i] = INF;
-		visitados[i] = 0;
-	}
-	
-	distancia[origem-1] = 0;
-	
-	printf("\n\tCaminho minimo do vertice %d para o vertice %d: ", origem, destino);
-	
-	for(i = 0; i < grafo->numeroVertices; i++)
-	{
-		while(verticeAtual != destino)
-		{
-			printf("(%d, ", verticeAtual);
-			verticeAtual = encontraMenorDistancia(grafo, distancia, visitados, verticeAtual);
-			printf("%d) ", verticeAtual);
-		}
-	}
-	
-	printf("\n\n\tCusto: %.2lf", distancia[destino-1]);
-	
-}	// Fim algoritmoDijkstra
-
-void inicializarDigrafo(Digrafo *grafo, int numeroVertices)
-{
-	int i;
-	grafo->numeroVertices = numeroVertices;
-    for (i = 0; i < numeroVertices; i++) grafo->cabecalho[i] = NULL;
-    
-}	// Fim inicializarDigrafo
-
-void adicionarArco(Digrafo *grafo, int origem, int destino, double peso)
-{
-	NodoListaAdjacencia *novoNodo = malloc(sizeof(NodoListaAdjacencia));
-	novoNodo->origem = origem;
-    novoNodo->destino = destino;
-    novoNodo->peso = peso;
-    novoNodo->prox = grafo->cabecalho[origem-1];	// i-1 porque o primeiro vertice tem valor 1, mas sera indexado a partir do 0
-    grafo->cabecalho[origem-1] = novoNodo;
-    
-}	// Fim adicionarArco
-
+}	// Fim esperaResposta
