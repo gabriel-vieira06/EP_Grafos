@@ -3,8 +3,8 @@
 	
 	- Gabriel Vieira Cavalcante
 	- Luiz Matheus Sena Macedo
-	- 
-	- 
+	- Joao Bruno Rodrigues de Freitas
+	- Cicero Nascimento
 */
 
 // ------------------------------
@@ -76,7 +76,7 @@ void recebeArquivo()
 	
 	if(arquivo == NULL)
 	{
-		printf("\n\n\tArquivo nao encontrado.\n");
+		printf("\n\n\tArquivo nao encontrado.");
 		return;
 	}
 	
@@ -93,8 +93,8 @@ void recebeArquivo()
 	for (i = 0; i < m; i++)
 	{
 		fscanf(arquivo, "%d %d %lf", &u, &v, &custo); // Le os dados de cada arco
-		arcos[i].origem = u - 1;
-		arcos[i].destino = v - 1;
+		arcos[i].origem = u - 1;	// -1 porque o menor vertice sera 1, mas serao indexados a partir do 0
+		arcos[i].destino = v - 1;	// para evitar complicacoes, o indice e vertice serao os mesmos
 		arcos[i].custo = custo;
 	}
 	
@@ -106,47 +106,67 @@ void recebeArquivo()
 
 void algoritmoDijkstra(int num_vertices, int num_arcos, int origem, int destino, Arco *arcos)
 {
-	double *distancia = malloc(sizeof(double) * num_vertices);
-	int *anterior = malloc(sizeof(int) * num_vertices);
-	int *visitados = malloc(sizeof(int) * num_vertices);
+	/*
+		Metodo algoritmoDijkstra
+		
+		Dados de entrada:
+		- numero de vertices do grafo
+		- numero de arcos do grafo
+		- vertice origem do problema
+		- vertice destino do problema
+		- vetor de arcos do digrafo, contendo seus custos
+		  e vertices de origem e destino.
+		
+		Saida: Mostra o caminho minimo entre o vertice
+		origem e destino do problema, assim como o seu custo.
+	*/
+	
+	
+	double *distancia = malloc(sizeof(double) * num_vertices);	// Vetor para armazenar a menor distancia entre os vertices
+	int *anterior = malloc(sizeof(int) * num_vertices);	// Vetor para armazenar o caminho a ser percorrido entre a origem e o destino
+	int *visitados = malloc(sizeof(int) * num_vertices);	// Vetor para armazenar os vertices na fronteira marcando-os como visitados
 	
 	int i, j;
-	int u, v, c;
+	int u, v;
+	double custo;
 	
-	if(distancia == NULL || anterior == NULL || visitados == NULL)
+	if(distancia == NULL || anterior == NULL || visitados == NULL)	// Falta memoria
 	{
 		printf("\n\n\tMemoria insuficiente.");
 		return;
 	}
 	
-	for (i = 0; i < num_vertices; i++) 
+	for (i = 0; i < num_vertices; i++)	// Marca todos os vertices com distancia infinita e nao visitados
 	{
 	    distancia[i] = INF;
 	    anterior[i] = -1;
 	    visitados[i] = 0;
 	}
 	
-	distancia[origem-1] = 0;
+	distancia[origem-1] = 0;	// Distancia da origem para ela mesma = 0
 	
 	for (i = 0; i < num_vertices - 1; i++)
 	{
-	    u = -1;
+	    u = -1;	// Vertice u
 	    for (j = 0; j < num_vertices; j++) 
 		{
-	      if (!visitados[j] && (u == -1 || distancia[j] < distancia[u])) u = j;
+			// Busca um vertice nao visitado, na primeira iteracoo sera a origem
+			// em seguida seram os vertices mais proximos a ela e ligados por arcos
+			// de menor custo.
+	    	if (!visitados[j] && (u == -1 || distancia[j] < distancia[u])) u = j;
 	    }
 	    
-		visitados[u] = 1;
+		visitados[u] = 1;	// Marca o vertice como visitado
 	    
-		for (j = 0; j < num_arcos; j++) 
+		for (j = 0; j < num_arcos; j++)
 		{
-		    if (arcos[j].origem == u) 
+		    if (arcos[j].origem == u) // Percorre cada arco com origem em u e seleciona o de menor custo
 			{
 		        v = arcos[j].destino;
-		        c = arcos[j].custo;
-		        if (distancia[u] + c < distancia[v]) 
+		        custo = arcos[j].custo;
+		        if (distancia[u] + custo < distancia[v]) 
 				{ 
-		          distancia[v] = distancia[u] + c;
+		          distancia[v] = distancia[u] + custo;
 		          anterior[v] = u;
 	    		}
 	    	}
@@ -157,35 +177,48 @@ void algoritmoDijkstra(int num_vertices, int num_arcos, int origem, int destino,
 	
 	if (distancia[destino - 1] == INF) 
 	{
+		
 	    printf("\n\n\tNao ha caminho entre os vertices %d e %d \n", origem, destino);
+	    
 	} else {
 	    
+	    // Variavel auxiliar para formatar a mensagem devidamente
 	    int *lista_impressao = malloc(sizeof(int) * num_vertices);
+	    
+	    if (lista_impressao == NULL)	// Falta de memoria.
+		{
+			printf("\n\n\tMemoria insuficiente.");
+			return;
+		}
 	    
 	    printf("\n\n\tCaminho minimo do vertice %d para o vertice %d: ", origem, destino);
 	    
-	    u = destino - 1;
+	    u = destino - 1;	// Vertice u e o destino do problema
 	    i = 0;
-	    while(anterior[u] != -1)
+	    
+	    while(anterior[u] != -1)	// Enquanto houver vertices no caminho do destino a origem
 	    {
-	    	lista_impressao[i] = u;
-	    	u = anterior[u];
+	    	lista_impressao[i] = u;	// Armazena o vertice
+	    	u = anterior[u];	// u armazena o vertice anterior
 	    	i++;
 		}
 		
-		lista_impressao[i] = origem-1;
+		lista_impressao[i] = origem-1;	// Inclui a origem no fim da lista
 		
-		for(j = i; j > 0; j--)
+		for(j = i; j > 0; j--)	// Para cada vertice no caminho da origem ao destino, imprime
 		{
-			printf("(%d, ", lista_impressao[j]+1);
-			printf("%d) ", lista_impressao[j-1]+1);
+			printf("(%d, ", lista_impressao[j] + 1);	// +1 para compensar a subtracao feita no metodo recebeArquivo
+			printf("%d) ", lista_impressao[j - 1] + 1);
 		}
 	    
-	    printf("\n\n\tCusto: %0.4lf\n", distancia[destino - 1]);
+	    free(lista_impressao);
+	    
+	    printf("\n\n\tCusto: %0.4lf", distancia[destino - 1]);
+
 	}
   
-  free(arcos); // Libera a memoria alocada para o vetor de arcos
-  free(distancia);  // Libera a memoria alocada para o vetor de diatancia
+  free(arcos);
+  free(distancia); 
   free(anterior);
 
 }	// Fim algoritmoDijkstra
