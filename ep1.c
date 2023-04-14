@@ -4,7 +4,7 @@
 	- Gabriel Vieira Cavalcante
 	- Luiz Matheus Sena Macedo
 	- Joao Bruno Rodrigues de Freitas
-	- Cicero Nascimento
+	- Antonio Cicero Nascimento
 */
 
 // ------------------------------
@@ -18,7 +18,6 @@
 // Constantes
 // ------------------------------
 #define INF DBL_MAX 		// Valor infinito para representar distancias não alcancaveis
-#define MAX_VERTICES 100	// Numero maximo de vertices do grafo
 
 // ------------------------------
 // Estruturas
@@ -230,7 +229,7 @@ void esperaResposta()
 		Metodo esperaResposta
 		
 		Simplesmente garante que o programa nao feche e permite a analise dos resultados
-		solicitando que o usuário pressione ENTER para encerra-lo.
+		solicitando que o usuario pressione ENTER para encerra-lo.
 		
 	*/
 	
