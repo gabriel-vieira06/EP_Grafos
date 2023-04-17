@@ -30,7 +30,7 @@ typedef struct {
 // ------------------------------
 // Funcoes
 // ------------------------------
-void recebeDados();
+void recebeDados(char *nomeArquivo);
 void esperaResposta();
 void algoritmoDijkstra(int num_vertices, int num_arcos, int origem, int destino, Arco *arcos);
 
