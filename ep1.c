@@ -30,20 +30,26 @@ typedef struct {
 // ------------------------------
 // Funcoes
 // ------------------------------
-void recebeArquivo();
+void recebeDados();
 void esperaResposta();
 void algoritmoDijkstra(int num_vertices, int num_arcos, int origem, int destino, Arco *arcos);
 
-int main()
+int main(int argc, char *argv[])
 {
-	recebeArquivo();
+	if (argc < 2) // Nome do arquivo nao fornecido
+	{
+	    printf("\n\n\tNome do arquivo nao foi fornecido, encerrando.\n");
+	    return 1;
+  	}
+	
+	recebeDados(argv[1]);
 	esperaResposta();
 	
 	return 0;
 
 }	// Fim main
 
-void recebeArquivo()
+void recebeDados(char *nomeArquivo)
 {
 	/*
 		Metodo recebeArquivo
@@ -59,7 +65,6 @@ void recebeArquivo()
 		Em seguida realiza a chamada do algoritmo de Dijkstra
 	*/
 	
-	char nomeArquivo[50];
 	FILE *arquivo;
 	Arco *arcos;
 	
@@ -67,9 +72,6 @@ void recebeArquivo()
 	int n,m,s,t;
 	int u, v;
 	double custo;
-	
-	printf("\n\tDigite o nome e extensao do arquivo a ser lido (Ex: arquivo.txt): ");
-	scanf("%s%*c", nomeArquivo);
 	
 	arquivo = fopen(nomeArquivo, "rt");
 	
